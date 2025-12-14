@@ -27,9 +27,9 @@
         "backgroundColor": "#ffffff"
       },
       "permissions": [
-  "com.android.vending.BILLING",
-  "android.permission.CAMERA",
-  "android.permission.SCHEDULE_EXACT_ALARM"
+        "com.android.vending.BILLING",
+        "android.permission.CAMERA",
+        "android.permission.SCHEDULE_EXACT_ALARM"
       ]
     },
     "web": {
@@ -37,8 +37,7 @@
     },
     "plugins": [
       "expo-notifications",
-      "expo-image-picker",
-      "react-native-iap"
+      "expo-image-picker"
     ],
     "extra": {
       "router": {},
