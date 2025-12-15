@@ -12,16 +12,14 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "app.sucandigital.beautyexpiry"
     },
     "android": {
       "package": "app.sucandigital.beautyexpiry",
-      "versionCode": 22,
+      "versionCode": 23,
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#ffffff"
@@ -32,9 +30,6 @@
         "android.permission.SCHEDULE_EXACT_ALARM"
       ]
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
     "plugins": [
       "expo-notifications",
       "expo-image-picker",
@@ -43,19 +38,16 @@
         {
           "android": {
             "compileSdkVersion": 36,
-            "targetSdkVersion": 36
+            "targetSdkVersion": 36,
+            "extraGradleProperties": {
+              "android.defaults.buildfeatures.buildconfig": "true",
+              "reactNativeIapStore": "play"
+            }
           }
-        }
-      ],
-      [
-        "react-native-iap",
-        {
-          "store": "play"
         }
       ]
     ],
     "extra": {
-      "router": {},
       "eas": {
         "projectId": "07a3134f-8908-425d-8b1e-042d5428c2f1"
       }
