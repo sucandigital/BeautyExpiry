@@ -12,18 +12,9 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 import { Home, Plus, Settings, Search, ChevronRight, X, Sparkles, Camera, Image as ImageIcon, Trash2, Globe, Folder, Lock, Calendar, Edit2, ArrowLeft, Bell, ArrowUpDown, Check, Download, FileText, Palette, Copy, CheckCircle, ArrowRight, RefreshCcw } from 'lucide-react-native';
 
 // === KORRIGIERTE IAP IMPORTS ===
-import {
-  initConnection,
-  endConnection,
-  getAvailablePurchases,
-  requestPurchase,
-  finishTransaction,
-  purchaseUpdatedListener,
-  purchaseErrorListener,
-  type Purchase,
-  type SubscriptionPurchase,
-  type PurchaseError,
-} from 'react-native-iap';
+import Purchases from 'react-native-purchases';
+import { Platform } from 'react-native';
+
 
 
 
@@ -716,197 +707,127 @@ const resetPremium = async () => {
 
  // === IAP INITIALISIERUNG (react-native-iap v13.x) ===
 useEffect(() => {
-  let purchaseUpdateSubscription: any;
-  let purchaseErrorSubscription: any;
-
-  const initIAP = async () => {
+  const initRevenueCat = async () => {
     try {
-      console.log('🔄 Initialisiere IAP Connection...');
+      if (__DEV__) {
+  Purchases.setLogLevel(Purchases.LOG_LEVEL.DEBUG);
+}
 
-      const connected = await initConnection();
-      console.log('✅ IAP Connection erfolgreich:', connected);
 
-      // Kurze Pause, damit Play Billing sauber initialisiert ist
-      await new Promise(resolve => setTimeout(resolve, 500));
+      if (Platform.OS === 'android') {
+        Purchases.configure({
+  apiKey:
+    Platform.OS === 'android'
+      ? 'goog_bbprYIAiEFHaGWKuiUYHfdXeino'
+      : 'appl_DEIN_IOS_KEY_HIER',
+});
 
-      // Vorherige Käufe wiederherstellen
-      try {
-        const purchases = await getAvailablePurchases();
-        console.log('📦 Vorherige Käufe:', purchases.length);
-
-        const hasPremium = purchases.some(
-          (p: any) => p.productId === PRODUCT_ID
-        );
-
-        if (hasPremium) {
-          console.log('✅ Premium bereits gekauft, aktiviere...');
-          setIsPremium(true);
-          await AsyncStorage.setItem('isPremium', 'true');
-        }
-      } catch {
-        console.log('ℹ️ Keine vorherigen Käufe gefunden');
       }
-    } catch (error: any) {
-      console.error('❌ IAP Init Fehler:', error);
 
-      if (error?.code === 'E_IAP_NOT_AVAILABLE') {
-        Alert.alert(
-          'Billing nicht verfügbar',
-          'In-App-Käufe sind auf diesem Gerät nicht verfügbar.'
-        );
-      } else {
-        Alert.alert(
-          'IAP Fehler',
-          error?.message || 'Unbekannter Initialisierungsfehler'
-        );
-      }
-    }
-  };
+      // 🔍 Beim Start prüfen, ob Premium bereits aktiv ist
+      const customerInfo = await Purchases.getCustomerInfo();
 
-  // === PURCHASE UPDATE LISTENER ===
-purchaseUpdateSubscription = purchaseUpdatedListener(
-  async (purchase: Purchase | SubscriptionPurchase) => {
-    console.log('📦 Purchase Update empfangen:', purchase);
+      const hasPremium =
+        customerInfo.entitlements.active['premium'] !== undefined;
 
-    if (purchase.productId !== PRODUCT_ID) return;
-
-    try {
-      await finishTransaction({ purchase });
-
-      console.log('✅ Kauf erfolgreich abgeschlossen');
-
-      if (!isPremium) {
+      if (hasPremium) {
         setIsPremium(true);
         await AsyncStorage.setItem('isPremium', 'true');
-        setShowPremium(false);
-        setShowSuccess(true);
       }
-    } catch (err) {
-      console.error('❌ FinishTransaction Fehler:', err);
-      Alert.alert('Fehler', 'Kauf konnte nicht abgeschlossen werden.');
+    } catch (e) {
+      console.log('❌ RevenueCat Init Fehler', e);
     }
-  }
-);
-
-
-  // === PURCHASE ERROR LISTENER ===
-  purchaseErrorSubscription = purchaseErrorListener(
-    (error: PurchaseError) => {
-      console.log('❌ Purchase Error:', error);
-
-      if (error.code === 'E_USER_CANCELLED') {
-        console.log('ℹ️ Kauf vom Nutzer abgebrochen');
-        return;
-      }
-
-      let message = 'Ein unbekannter Fehler ist aufgetreten.';
-
-      if (error.code === 'E_ITEM_UNAVAILABLE') {
-        message =
-          'Produkt nicht verfügbar.\n\n' +
-          '✓ App im Play Store (Testing Track)\n' +
-          '✓ Produkt-ID exakt "premium_unlock"\n' +
-          '✓ Tester-E-Mail eingetragen\n' +
-          '✓ 2–4 Stunden nach Upload gewartet';
-      } else if (error.code === 'E_NETWORK_ERROR') {
-        message = 'Netzwerkfehler. Bitte Internetverbindung prüfen.';
-      } else if (error.message) {
-        message = error.message;
-      }
-
-      Alert.alert('Kauf fehlgeschlagen', message);
-    }
-  );
-
-  // === BOOTSTRAP (WICHTIG: async korrekt gekapselt) ===
-  const bootstrap = async () => {
-    await loadData();
-    await initIAP();
-    await requestPermissions();
   };
 
-  bootstrap();
-
-  // === CLEANUP ===
-  return () => {
-    if (purchaseUpdateSubscription) {
-      purchaseUpdateSubscription.remove();
-    }
-    if (purchaseErrorSubscription) {
-      purchaseErrorSubscription.remove();
-    }
-    endConnection().catch(() => {});
-  };
+  initRevenueCat();
 }, []);
+
 
 
 // === KAUF FUNKTION ===
 const handleBuyPremium = async () => {
   try {
-    console.log('🛒 Starte Kaufprozess...');
-    await requestPurchase({
-  skus: [PRODUCT_ID],
-});
+    console.log('🛒 Starte RevenueCat Kauf...');
 
-    console.log('✅ Purchase Request gesendet');
-  } catch (err: any) {
-    if (err?.code === 'E_USER_CANCELLED') {
-      console.log('ℹ️ Kauf vom Nutzer abgebrochen');
+    const offerings = await Purchases.getOfferings();
+
+    if (!offerings.current) {
+      Alert.alert(
+        'Fehler',
+        'Produkt ist derzeit nicht verfügbar. Bitte versuche es später erneut.'
+      );
       return;
     }
 
-    console.error('❌ Buy Premium Fehler:', err);
+const premiumPackage =
+  offerings.current.availablePackages.find(
+    (p: Purchases.Package) => p.product.identifier === PRODUCT_ID
+  ) || offerings.current.availablePackages[0];
 
-    let errorMessage = err?.message || 'Ein unbekannter Fehler ist aufgetreten.';
 
-    if (err?.code === 'E_ALREADY_OWNED') {
-      errorMessage =
-        'Du hast Premium bereits gekauft.\n\nBitte nutze „Käufe wiederherstellen“.';
-    } else if (err?.code === 'E_ITEM_UNAVAILABLE') {
-      errorMessage =
-        'Produkt nicht verfügbar.\n\n' +
-        '✓ App im Play Store (Closed/Internal Test)\n' +
-        '✓ Produkt-ID exakt "premium_unlock"\n' +
-        '✓ Tester-E-Mail eingetragen\n' +
-        '✓ 2–4 Stunden nach Upload gewartet';
+
+    if (!premiumPackage) {
+      Alert.alert(
+        'Fehler',
+        'Premium-Produkt nicht gefunden. Prüfe RevenueCat-Konfiguration.'
+      );
+      return;
     }
 
-    Alert.alert('Kauf fehlgeschlagen', errorMessage);
+    const { customerInfo } = await Purchases.purchasePackage(premiumPackage);
+
+    const hasPremium =
+      customerInfo.entitlements.active['premium'] !== undefined;
+
+    if (hasPremium) {
+      setIsPremium(true);
+      await AsyncStorage.setItem('isPremium', 'true');
+      setShowPremium(false);
+      setShowSuccess(true);
+    }
+  } catch (err: any) {
+    if (err.userCancelled) {
+      console.log('ℹ️ Kauf abgebrochen');
+      return;
+    }
+
+    console.error('❌ RevenueCat Kauf Fehler', err);
+    Alert.alert(
+      'Kauf fehlgeschlagen',
+      err?.message || 'Unbekannter Fehler'
+    );
   }
 };
+
 
 
 // === RESTORE PURCHASES ===
 const restorePurchases = async () => {
   try {
-    console.log('🔄 Stelle Käufe wieder her...');
-    const purchases = await getAvailablePurchases();
-    console.log('📦 Gefundene Käufe:', purchases.length);
-    
-    let restored = false;
-    for (const purchase of purchases) {
-      if (purchase.productId === PRODUCT_ID) {      
-        setIsPremium(true);
-        await AsyncStorage.setItem('isPremium', 'true');
-        restored = true;
-        break;
-      }
-    }
-    
-if (restored) {
-  setShowSuccess(true);
-  Alert.alert('Erfolg', 'Premium wurde wiederhergestellt! 🎉');
-} else {
+    console.log('🔄 RevenueCat Restore...');
+
+    const customerInfo = await Purchases.restorePurchases();
+
+    const hasPremium =
+      customerInfo.entitlements.active['premium'] !== undefined;
+
+    if (hasPremium) {
+      setIsPremium(true);
+      await AsyncStorage.setItem('isPremium', 'true');
+      setShowSuccess(true);
+      Alert.alert('Erfolg', 'Premium wurde wiederhergestellt 🎉');
+    } else {
       Alert.alert(
-        'Keine Käufe gefunden', 
-        'Es wurden keine vorherigen Käufe gefunden.\n\nStelle sicher, dass du mit dem richtigen Google-Konto angemeldet bist.'
+        'Keine Käufe gefunden',
+        'Für dieses Konto wurde kein Premium-Kauf gefunden.'
       );
     }
-  } catch (err: any) {
-    console.error('❌ Restore Fehler:', err);
+  } catch (e) {
+    console.error('❌ Restore Fehler', e);
     Alert.alert('Fehler', 'Käufe konnten nicht wiederhergestellt werden.');
   }
 };
+
   const addCustomCategory = async (cat: string) => { const newCats = [...customCategories, cat]; setCustomCategories(newCats); await AsyncStorage.setItem('customCategories', JSON.stringify(newCats)); }
   const deleteCustomCategory = async (cat: string) => { const newCats = customCategories.filter(c => c !== cat); setCustomCategories(newCats); await AsyncStorage.setItem('customCategories', JSON.stringify(newCats)); }
   const saveProduct = async (newProduct: Product) => {
