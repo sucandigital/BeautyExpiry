@@ -984,6 +984,7 @@ function MainApp() {
   const [legalType, setLegalType] = useState<'privacy'|'terms'>('privacy');
   const [duplicateData, setDuplicateData] = useState<Product|null>(null);
   const [hasOnboarded, setHasOnboarded] = useState(false);
+  const [isAppReady, setIsAppReady] = useState(false);
 
   const theme = THEMES[currentTheme];
   const t: any = TRANSLATIONS[language] || TRANSLATIONS.en;
@@ -1047,6 +1048,7 @@ const resetPremium = async () => {
 };
 
 // === IAP INITIALISIERUNG & DATEN LADEN ===
+  // === IAP INITIALISIERUNG & DATEN LADEN ===
   useEffect(() => {
     const initApp = async () => {
       // 1. Erstmal die lokalen Daten laden (Sprache, Produkte, etc.)
@@ -1076,6 +1078,11 @@ const resetPremium = async () => {
         }
       } catch (e) {
         console.log('❌ RevenueCat Init Fehler', e);
+      } finally {
+        // HIER IST DIE ÄNDERUNG (PUNKT 2):
+        // Egal was passiert (Erfolg oder Fehler), der Ladevorgang ist jetzt beendet.
+        // Die App darf jetzt den Inhalt (Dashboard oder Onboarding) anzeigen.
+        setIsAppReady(true);
       }
     };
 
@@ -1249,7 +1256,14 @@ const restorePurchases = async () => {
   }
  
   const exportPDF = async () => { const { html } = generateExportData(); const { uri } = await Print.printToFileAsync({ html }); await Sharing.shareAsync(uri); }
-  const renderContent = () => {
+const renderContent = () => {
+      // HIER IST DIE ÄNDERUNG (PUNKT 3):
+      // Wenn die App noch lädt (Datenbank liest), zeigen wir kurz gar nichts an.
+      // Das verhindert das "Aufblitzen" des Onboarding-Screens.
+      if (!isAppReady) {
+        return null; 
+      }
+
       if (!hasOnboarded) return <OnboardingScreen onStart={finishOnboarding} onChangeLang={changeLanguage} currentLang={language} t={t} theme={theme} insets={insets} />
       switch (activeTab) {
           case 'dashboard': return <Dashboard products={products} onProductPress={(id: string) => { setSelectedProductId(id); setActiveTab('details'); }} customCategories={customCategories} lang={language} t={t} theme={theme} />;
