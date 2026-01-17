@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     
-    "icon": "./assets/production-icon.PNG", 
+    "icon": "./assets/production-icon.png", 
     
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
@@ -24,7 +24,7 @@
       "versionCode": 39,
       "adaptiveIcon": {
         
-        "foregroundImage": "./assets/production-icon.PNG",
+        "foregroundImage": "./assets/production-icon.png",
         
         "backgroundColor": "#FAF6F4"
       },
