@@ -379,7 +379,7 @@ const pt = {
 
     // === SALES COPY ===
     premiumTitle: "Desbloquear Premium",
-    upgradeBtn: "Melhorar por 3,99 €",
+    upgradeBtn: "Melhorar por 24,99 BRL",
     premiumFeature: "Recurso Premium",
     successTitle: "Premium Ativado! 🎉",
     thankYou: "Obrigado pela sua compra!",
@@ -430,7 +430,7 @@ const tr = {
 
     // === SALES COPY ===
     premiumTitle: "Premium'a Yükselt",
-    upgradeBtn: "3,99 € ile Yükselt",
+    upgradeBtn: "199 TL ile Yükselt",
     premiumFeature: "Premium Özellik",
     successTitle: "Premium Etkinleştirildi! 🎉",
     thankYou: "Satın aldığınız için teşekkürler!",
