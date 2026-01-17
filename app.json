@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     
-    "icon": "./assets/app-icon.png", 
+    "icon": "./assets/production-icon.PNG", 
     
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
@@ -24,7 +24,7 @@
       "versionCode": 39,
       "adaptiveIcon": {
         
-        "foregroundImage": "./assets/app-icon.png",
+        "foregroundImage": "./assets/production-icon.PNG",
         
         "backgroundColor": "#FAF6F4"
       },
